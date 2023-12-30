@@ -10,7 +10,7 @@ import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceCont
 import org.json.{JSONArray, JSONException, JSONObject}
 
 import java.net.Socket
-import java.io.{BufferedWriter, FileWriter, OutputStreamWriter}
+import java.io.{BufferedWriter, File, FileWriter, OutputStreamWriter}
 import scala.collection.mutable.ArrayBuffer
 
 
@@ -42,9 +42,25 @@ class SpaceXApiSource extends RichParallelSourceFunction[LaunchEvent] {
     val response = client.send(request, HttpResponse.BodyHandlers.ofString())
 
     val launches = parseLaunches(response.body)
+    writeLaunchesToCSV(launches)
+
     launches.foreach(println)
 
     Seq.empty[LaunchEvent]
+  }
+
+  private def writeLaunchesToCSV(launches: Seq[LaunchEvent]): Unit = {
+    val csvFile = new File("C:/Users/inesl/spaceXLaunches.csv")
+    val writer = new BufferedWriter(new FileWriter(csvFile, true))
+
+    try {
+      for (launch <- launches) {
+        val csvLine = s"${launch.name},${launch.date_utc},${launch.rocket},${launch.landing_type.getOrElse("")},${launch.success.getOrElse("")}\n"
+        writer.write(csvLine)
+      }
+    } finally {
+      writer.close()
+    }
   }
 
   private def parseLaunches(json: String): Seq[LaunchEvent] = {
