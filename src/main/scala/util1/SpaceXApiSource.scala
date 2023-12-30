@@ -9,11 +9,13 @@ import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunctio
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext
 import org.json.{JSONArray, JSONException, JSONObject}
 
-import java.io.{BufferedWriter, FileWriter}
+import java.net.Socket
+import java.io.{BufferedWriter, FileWriter, OutputStreamWriter}
 import scala.collection.mutable.ArrayBuffer
 
 
 class SpaceXApiSource extends RichParallelSourceFunction[LaunchEvent] {
+
 
   @volatile private var running = true
 
@@ -22,6 +24,7 @@ class SpaceXApiSource extends RichParallelSourceFunction[LaunchEvent] {
       fetchSpaceXLaunches().foreach(ctx.collect)
       Thread.sleep(1000)
     }
+
   }
 
   override def cancel(): Unit = {
