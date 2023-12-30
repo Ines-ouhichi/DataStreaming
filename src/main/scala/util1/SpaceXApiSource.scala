@@ -50,7 +50,7 @@ class SpaceXApiSource extends RichParallelSourceFunction[LaunchEvent] {
   }
 
   private def writeLaunchesToCSV(launches: Seq[LaunchEvent]): Unit = {
-    val csvFile = new File("C:/Users/inesl/spaceXLaunches.csv")
+    val csvFile = new File("spaceXLaunches.csv")
     val writer = new BufferedWriter(new FileWriter(csvFile, true))
 
     try {
