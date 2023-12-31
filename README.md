@@ -35,6 +35,7 @@ Ensure you have the following installed:
 
 The application is currently configured to print raw events. 
 
+Happy streaming with Flink! 🚀
 
 ## Visualization with Python: FuncAnimation in Matplotlib
 
