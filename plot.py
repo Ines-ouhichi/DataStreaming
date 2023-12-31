@@ -1,47 +1,58 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from datetime import datetime
-import time
+from matplotlib.animation import FuncAnimation
 
 def read_csv_with_varying_columns(file_path, expected_columns):
     data = []
 
     with open(file_path, 'r') as file:
         for line in file:
-            # Split the line into fields using a comma as the delimiter
             fields = line.strip().split(',')
-
-            # Check if the number of fields matches the expected number
             if len(fields) == expected_columns:
                 data.append(fields)
 
-    # Create a DataFrame from the collected data
     df = pd.DataFrame(data)
-
     return df
 
-while True:
+def update_plot(frame):
     try:
-        # Read CSV file without header, skipping lines with errors
         df = read_csv_with_varying_columns('spaceXLaunches.csv', expected_columns=5)
     except Exception as e:
         print(f"Error reading CSV file: {e}")
-        continue  # Skip to the next iteration
+        return
 
-    # Convert the second column (index 1) to datetime format
-    df[1] = pd.to_datetime(df[1])
+    df.columns = ["mission_name", "launch_date", "launch_vehicle", "customer", "launch_success"]
+    launch_dates = pd.to_datetime(df["launch_date"])
+    launch_years = launch_dates.dt.year
+    launch_counts = launch_years.value_counts().sort_index()
 
-    # Plotting
-    plt.figure(figsize=(10, 6))
-    for index, row in df.iterrows():
-        plt.plot(row[1], index, marker='o', linestyle='-', color='b', label=row[0])
+    plt.cla()  # Clear the current axis to update the plot
+    # Bar plot
+    plt.bar(launch_counts.index, launch_counts.values, color='gray', alpha=0.7, label="Unknown")
 
-    plt.title('Satellite Launch Timeline')
-    plt.xlabel('Launch Date')
-    plt.ylabel('Satellite Index')
+    success_counts = df[df["launch_success"] == 'true'].groupby(launch_dates.dt.year)["launch_success"].count()
+    fail_counts = df[df["launch_success"] == 'false'].groupby(launch_dates.dt.year)["launch_success"].count()
+
+    success_counts = success_counts.reindex(launch_counts.index, fill_value=0)
+    fail_counts = fail_counts.reindex(launch_counts.index, fill_value=0)
+   
+    plt.bar(success_counts.index, success_counts.values, color='green', alpha=0.7, label="Success")
+    plt.bar(fail_counts.index, fail_counts.values, bottom=success_counts.values, color='red', alpha=0.7, label="Fail")
+
+    # Line plot
+    plt.plot(launch_counts.index, launch_counts.values, color='red', marker='o', linestyle='dashed', linewidth=2, markersize=8, label="Total Launches")
+
+    plt.xlabel("Year", labelpad=10)
+    plt.ylabel("Number of Launches")
+    plt.title("Launch Frequency")
+    plt.xticks(rotation=45, ha="right")
+    plt.xticks(range(min(launch_years), max(launch_years) + 1))
+
     plt.legend()
     plt.grid(True)
-    plt.show()
+    plt.tight_layout()
 
-    # Pause for a while before checking for updates
-    time.sleep(60)  # Check every minute, for example
+# Set up the initial plot
+plt.figure(figsize=(10, 6))
+ani = FuncAnimation(plt.gcf(), update_plot, interval=1000)  
+plt.show()
